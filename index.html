@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-slate-50">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tour Operations & Guiding Vocabulary Assessment</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .word-chip { transition: all 0.2s ease-in-out; }
+        .word-chip.selected { transform: scale(0.95); opacity: 0.5; }
+        .blank-space { transition: border-color 0.2s, background-color 0.2s; }
+    </style>
+</head>
+<body class="h-full text-slate-800 flex flex-col justify-between">
+
+    <!-- Header / Navigation Bar -->
+    <header class="bg-indigo-900 text-white shadow-md sticky top-0 z-50">
+        <div class="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <i class="fa-solid me-2 fa-compass text-amber-400 text-2xl"></i>
+                <div>
+                    <h1 class="font-bold text-lg leading-tight">Tour Guiding & Operations Assessment</h1>
+                    <p class="text-xs text-indigo-200">Vocabulary Gap-Fill Quiz</p>
+                </div>
+            </div>
+            <!-- Timer Display -->
+            <div id="timer" class="bg-indigo-950/70 border border-indigo-700/60 rounded-lg text-right font-bold text-red-400 px-3 py-1 text-sm sm:text-base flex items-center gap-2">
+                <i class="fa-regular fa-clock"></i> <span>Time: 8m</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="max-w-4xl mx-auto px-4 py-6 flex-grow w-full">
+
+        <!-- 1. START / IDENTIFICATION SCREEN -->
+        <div id="startScreen" class="bg-white rounded-2xl shadow-xl p-6 sm:p-10 border border-slate-100 max-w-xl mx-auto my-8">
+            <div class="text-center mb-6">
+                <div class="inline-flex items-center justify-center w-16 h-16 bg-indigo-100 text-indigo-700 rounded-full mb-3">
+                    <i class="fa-solid fa-user-graduate text-2xl"></i>
+                </div>
+                <h2 class="text-2xl font-bold text-slate-900">Examinee Identification</h2>
+                <p class="text-sm text-slate-500 mt-1">Please enter your details to begin the assessment.</p>
+            </div>
+
+            <form id="startForm" onsubmit="startQuiz(event)" class="space-y-4">
+                <div>
+                    <label for="fullName" class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1">Full Name</label>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
+                            <i class="fa-solid fa-user"></i>
+                        </span>
+                        <input type="text" id="fullName" required class="w-full pl-10 pr-4 py-2.5 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-slate-800 text-sm" placeholder="e.g. Jane Doe">
+                    </div>
+                </div>
+
+                <div>
+                    <label for="studentId" class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1">Student / Candidate ID</label>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
+                            <i class="fa-solid fa-id-card"></i>
+                        </span>
+                        <input type="text" id="studentId" required class="w-full pl-10 pr-4 py-2.5 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-slate-800 text-sm" placeholder="e.g. ST-88291">
+                    </div>
+                </div>
+
+                <div class="bg-amber-50 border border-amber-200 rounded-lg p-3 text-xs text-amber-800 flex items-start space-x-2">
+                    <i class="fa-solid fa-triangle-exclamation text-amber-600 mt-0.5"></i>
+                    <div>
+                        <strong>Instructions:</strong> Each target word from the word bank can be used only once. Once selected and confirmed, your answers are irreversible. You have 8 minutes to complete all questions.
+                    </div>
+                </div>
+
+                <button type="submit" class="w-full mt-4 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 px-6 rounded-lg shadow-md hover:shadow-lg transition flex items-center justify-center space-x-2">
+                    <span>Begin Quiz</span>
+                    <i class="fa-solid fa-arrow-right"></i>
+                </button>
+            </form>
+        </div>
+
+        <!-- 2. QUIZ INTERACTION SCREEN -->
+        <div id="quizScreen" class="hidden space-y-6">
+
+            <!-- Progress & Voice Narrator Controls -->
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div class="flex items-center space-x-3 w-full sm:w-auto">
+                    <button onclick="readQuestion()" class="px-3 py-2 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 rounded-lg border border-indigo-200 text-xs font-medium flex items-center space-x-2 transition">
+                        <i class="fa-solid fa-volume-high text-indigo-600"></i>
+                        <span>Listen (British Female)</span>
+                    </button>
+                    <span id="questionCounter" class="text-xs font-bold uppercase tracking-wider text-slate-500">Question 1 of 6</span>
+                </div>
+                <!-- Progress Bar -->
+                <div class="w-full sm:w-1/2 bg-slate-200 rounded-full h-2.5 overflow-hidden">
+                    <div id="progressBar" class="bg-indigo-600 h-2.5 rounded-full transition-all duration-300" style="width: 16.66%"></div>
+                </div>
+            </div>
+
+            <!-- Reshuffled Word Bank Box -->
+            <div class="bg-slate-900 text-white rounded-2xl p-5 shadow-lg">
+                <div class="flex items-center justify-between mb-3">
+                    <h3 class="text-xs font-semibold uppercase tracking-wider text-slate-400 flex items-center gap-2">
+                        <i class="fa-solid fa-cubes text-indigo-400"></i> Available Word Bank (Click to Select)
+                    </h3>
+                    <span class="text-xs text-slate-400">Click word, then click blank space</span>
+                </div>
+                <div id="wordBankContainer" class="flex flex-wrap gap-2 sm:gap-3">
+                    <!-- Word Chips populated via JS -->
+                </div>
+            </div>
+
+            <!-- Active Question Card -->
+            <div id="questionCard" class="bg-white rounded-2xl shadow-md border border-slate-200 p-6 sm:p-8 space-y-6">
+                <!-- Question Text -->
+                <div class="text-lg sm:text-xl leading-relaxed font-medium text-slate-800" id="questionSentence">
+                    <!-- Dynamic Question Content -->
+                </div>
+
+                <!-- Selection Preview / Slot Interactive -->
+                <div class="p-4 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-between">
+                    <div class="flex items-center space-x-3">
+                        <span class="text-xs font-bold text-slate-500 uppercase">Selected Choice:</span>
+                        <span id="currentSelection" class="text-base font-bold text-indigo-700 underline decoration-indigo-300 decoration-2">None</span>
+                    </div>
+                    <button onclick="clearCurrentSelection()" id="clearBtn" class="text-xs text-slate-500 hover:text-red-600 flex items-center space-x-1 hidden">
+                        <i class="fa-solid fa-rotate-left"></i>
+                        <span>Reset Selection</span>
+                    </button>
+                </div>
+
+                <!-- Instant Feedback Banner -->
+                <div id="feedbackBanner" class="hidden rounded-xl p-4 border text-sm space-y-2">
+                    <div id="feedbackTitle" class="font-bold flex items-center space-x-2"></div>
+                    <div id="feedbackExplanation" class="text-slate-700 text-xs sm:text-sm leading-normal"></div>
+                </div>
+
+                <!-- Navigation Action Buttons -->
+                <div class="flex items-center justify-between pt-4 border-t border-slate-100">
+                    <button id="prevBtn" onclick="navigatePrev()" class="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-lg text-sm transition flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed">
+                        <i class="fa-solid fa-chevron-left"></i>
+                        <span>Back</span>
+                    </button>
+
+                    <button id="actionBtn" onclick="confirmAnswer()" class="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-lg text-sm shadow-md transition flex items-center space-x-2">
+                        <span>Confirm Answer</span>
+                        <i class="fa-solid fa-check"></i>
+                    </button>
+
+                    <button id="nextBtn" onclick="navigateNext()" class="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-lg text-sm transition flex items-center space-x-2">
+                        <span>Skip / Next</span>
+                        <i class="fa-solid fa-chevron-right"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Global Submission Button (Triggers Results Dashboard) -->
+            <div class="text-center pt-4">
+                <button onclick="submitFinalQuiz()" class="px-8 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-lg hover:shadow-xl transition transform hover:-translate-y-0.5 inline-flex items-center space-x-2">
+                    <i class="fa-solid fa-paper-plane"></i>
+                    <span>Submit Complete Quiz</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- 3. RESULTS & TEACHER SUMMARY DASHBOARD -->
+        <div id="resultScreen" class="hidden bg-white rounded-2xl shadow-xl border border-slate-200 p-6 sm:p-10 max-w-3xl mx-auto space-y-8 my-6">
+            <div class="text-center border-b border-slate-100 pb-6">
+                <div class="inline-flex items-center justify-center w-20 h-20 bg-emerald-100 text-emerald-600 rounded-full mb-4 shadow-inner">
+                    <i class="fa-solid fa-award text-4xl"></i>
+                </div>
+                <h2 class="text-3xl font-bold text-slate-900">Quiz Completed!</h2>
+                <p class="text-slate-500 text-sm mt-1">Here is your detailed performance report and teacher copy.</p>
+            </div>
+
+            <!-- Student Summary Header -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 bg-slate-50 rounded-xl p-4 border border-slate-200 text-center">
+                <div>
+                    <span class="block text-xs text-slate-500 uppercase font-semibold">Examinee Name</span>
+                    <span id="summaryName" class="text-base font-bold text-slate-800">-</span>
+                </div>
+                <div>
+                    <span class="block text-xs text-slate-500 uppercase font-semibold">Candidate ID</span>
+                    <span id="summaryId" class="text-base font-bold text-slate-800">-</span>
+                </div>
+                <div>
+                    <span class="block text-xs text-slate-500 uppercase font-semibold">Final Score</span>
+                    <span id="summaryScore" class="text-base font-bold text-indigo-600">- / 6</span>
+                </div>
+            </div>
+
+            <!-- Comprehensive Question Review -->
+            <div>
+                <h3 class="text-lg font-bold text-slate-900 mb-3 flex items-center space-x-2">
+                    <i class="fa-solid fa-list-check text-indigo-600"></i>
+                    <span>Detailed Answers Breakdown</span>
+                </h3>
+                <div id="reviewContainer" class="space-y-3">
+                    <!-- Populated dynamically -->
+                </div>
+            </div>
+
+            <!-- Email Submission Action Box -->
+            <div class="bg-indigo-50 border border-indigo-200 rounded-2xl p-6 text-center space-y-4">
+                <div>
+                    <h4 class="font-bold text-indigo-950 text-base">Submit Score to Instructor</h4>
+                    <p class="text-xs text-indigo-700 mt-1">Click below to send your completed assessment details directly to <strong>mesayferedegn2@gmail.com</strong>.</p>
+                </div>
+                <button onclick="sendScoreEmail()" class="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-md transition inline-flex items-center space-x-2">
+                    <i class="fa-solid fa-envelope"></i>
+                    <span>Email Results to Teacher</span>
+                </button>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-slate-200 py-4 text-center text-xs text-slate-500">
+        <p>&copy; 2026 Instructional Design & Assessment System. Tourism & Hospitality Department.</p>
+    </footer>
+
+    <!-- JavaScript Logic -->
+    <script>
+        // 1. ORIGINAL WORD BANK
+        const originalWordBank = ["insight", "rituals", "norm", "origin", "grasp", "opt"];
+
+        // 2. QUESTION DATASET
+        const questionsData = [
+            {
+                id: 1,
+                sentenceBefore: "1. Experienced tour guides provide travelers with deep cultural ",
+                sentenceAfter: " into local customs that go beyond standard travel brochures.",
+                correctWord: "insight",
+                explanation: "'Insight' means a deep or clear understanding of a complex situation or culture. Guides help tourists gain deeper cultural awareness."
+            },
+            {
+                id: 2,
+                sentenceBefore: "2. Many tour operators include traditional welcoming ",
+                sentenceAfter: ", such as a tea ceremony or local blessing, to make their itineraries memorable.",
+                correctWord: "rituals",
+                explanation: "'Rituals' refers to formal, traditional ceremonial actions or repeated traditional practices."
+            },
+            {
+                id: 3,
+                sentenceBefore: "3. Arriving at the meeting point 15 minutes prior to departure has become the standard ",
+                sentenceAfter: " for professional guides.",
+                correctWord: "norm",
+                explanation: "'Norm' signifies an accepted standard, benchmark, or typical pattern of behavior within an industry."
+            },
+            {
+                id: 4,
+                sentenceBefore: "4. During heritage walking tours, guides explain the historical ",
+                sentenceAfter: " of iconic monuments and historic neighborhood names.",
+                correctWord: "origin",
+                explanation: "'Origin' refers to the beginning, history, or creation point of something."
+            },
+            {
+                id: 5,
+                sentenceBefore: "5. Tour operators must thoroughly ",
+                sentenceAfter: " changing safety regulations and entry requirements before launching new international packages.",
+                correctWord: "grasp",
+                explanation: "'Grasp' means to mentally comprehend or fully understand complex concepts and rules."
+            },
+            {
+                id: 6,
+                sentenceBefore: "6. To avoid overcrowded tourist traps, independent tour operators may ",
+                sentenceAfter: " to take guests along alternative, off-the-beaten-path routes.",
+                correctWord: "opt",
+                explanation: "'Opt' means to choose or make a decision in favor of a specific option."
+            }
+        ];
+
+        // 3. STATE MANAGEMENT
+        let studentName = "";
+        let studentId = "";
+        let currentQuestionIndex = 0;
+        let shuffledWordBank = [];
+        let userAnswers = Array(questionsData.length).fill(null); // stores word chosen for each q
+        let confirmedAnswers = Array(questionsData.length).fill(false); // lock state for irreversibility
+        let timerInterval = null;
+        let timeRemainingSeconds = 8 * 60; // 8 minutes
+
+        // 4. SHUFFLE HELPER (Fisher-Yates)
+        function shuffleArray(array) {
+            const arr = [...array];
+            for (let i = arr.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [arr[i], arr[j]] = [arr[j], arr[i]];
+            }
+            return arr;
+        }
+
+        // 5. START QUIZ
+        function startQuiz(event) {
+            event.preventDefault();
+            studentName = document.getElementById('fullName').value.trim();
+            studentId = document.getElementById('studentId').value.trim();
+
+            if (!studentName || !studentId) {
+                alert("Please fill in both your Full Name and ID Number.");
+                return;
+            }
+
+            // Reshuffle word bank using Fisher-Yates shuffle
+            shuffledWordBank = shuffleArray(originalWordBank);
+
+            // Hide start screen, show quiz screen
+            document.getElementById('startScreen').classList.add('hidden');
+            document.getElementById('quizScreen').classList.remove('hidden');
+
+            // Render word bank and first question
+            renderWordBank();
+            loadQuestion(0);
+
+            // Start Timer
+            startTimer();
+        }
+
+        // 6. TIMER LOGIC
+        function startTimer() {
+            const timerElement = document.getElementById('timer');
+            timerInterval = setInterval(() => {
+                timeRemainingSeconds--;
+                const minutes = Math.floor(timeRemainingSeconds / 60);
+                const seconds = timeRemainingSeconds % 60;
+                
+                timerElement.querySelector('span').innerText = `Time: ${minutes}m ${seconds < 10 ? '0' : ''}${seconds}s`;
+
+                if (timeRemainingSeconds <= 0) {
+                    clearInterval(timerInterval);
+                    alert("Time is up! Your quiz will be submitted automatically.");
+                    submitFinalQuiz();
+                }
+            }, 1000);
+        }
+
+        // 7. RENDER WORD BANK
+        function renderWordBank() {
+            const container = document.getElementById('wordBankContainer');
+            container.innerHTML = "";
+
+            shuffledWordBank.forEach(word => {
+                // Check if this word has been used in ANY confirmed question
+                const isUsed = userAnswers.some((ans, idx) => ans === word && confirmedAnswers[idx]);
+                const isCurrentSelection = userAnswers[currentQuestionIndex] === word;
+
+                const chip = document.createElement('button');
+                chip.type = "button";
+                chip.className = `word-chip px-4 py-2 rounded-lg font-semibold text-sm border shadow-sm transition flex items-center space-x-1.5 ${
+                    isUsed 
+                    ? 'bg-slate-800 text-slate-500 border-slate-700 cursor-not-allowed opacity-40 line-through' 
+                    : isCurrentSelection 
+                    ? 'bg-indigo-500 text-white border-indigo-400 ring-2 ring-indigo-300' 
+                    : 'bg-slate-800 hover:bg-slate-700 text-indigo-200 border-slate-700'
+                }`;
+                chip.innerText = word;
+                
+                if (!isUsed && !confirmedAnswers[currentQuestionIndex]) {
+                    chip.onclick = () => selectWord(word);
+                } else if (isUsed) {
+                    chip.disabled = true;
+                }
+
+                container.appendChild(chip);
+            });
+        }
+
+        // 8. SELECT WORD
+        function selectWord(word) {
+            if (confirmedAnswers[currentQuestionIndex]) return; // Irreversible once confirmed
+            userAnswers[currentQuestionIndex] = word;
+            renderWordBank();
+            updateQuestionUI();
+        }
+
+        function clearCurrentSelection() {
+            if (confirmedAnswers[currentQuestionIndex]) return;
+            userAnswers[currentQuestionIndex] = null;
+            renderWordBank();
+            updateQuestionUI();
+        }
+
+        // 9. LOAD QUESTION AT INDEX
+        function loadQuestion(index) {
+            currentQuestionIndex = index;
+            const q = questionsData[index];
+
+            // Counter & Progress
+            document.getElementById('questionCounter').innerText = `Question ${index + 1} of ${questionsData.length}`;
+            document.getElementById('progressBar').style.width = `${((index + 1) / questionsData.length) * 100}%`;
+
+            renderWordBank();
+            updateQuestionUI();
+        }
+
+        // 10. UPDATE QUESTION CARD UI
+        function updateQuestionUI() {
+            const q = questionsData[currentQuestionIndex];
+            const currentAns = userAnswers[currentQuestionIndex];
+            const isConfirmed = confirmedAnswers[currentQuestionIndex];
+
+            // Construct Sentence with Blank Slot
+            const sentenceContainer = document.getElementById('questionSentence');
+            const slotHtml = `<span id="blankSlot" onclick="focusWordBank()" class="inline-block border-b-2 border-indigo-600 font-bold px-3 py-0.5 mx-1 min-w-[100px] text-center rounded bg-indigo-50/50 cursor-pointer ${currentAns ? 'text-indigo-700' : 'text-slate-400 italic'}">${currentAns || "_______"}</span>`;
+            sentenceContainer.innerHTML = `${q.sentenceBefore}${slotHtml}${q.sentenceAfter}`;
+
+            // Current Selection Preview Box
+            const currentSelElem = document.getElementById('currentSelection');
+            const clearBtn = document.getElementById('clearBtn');
+            if (currentAns) {
+                currentSelElem.innerText = currentAns;
+                currentSelElem.className = "text-base font-bold text-indigo-700 underline decoration-indigo-300 decoration-2";
+                if (!isConfirmed) clearBtn.classList.remove('hidden');
+                else clearBtn.classList.add('hidden');
+            } else {
+                currentSelElem.innerText = "None";
+                currentSelElem.className = "text-base font-normal text-slate-400 italic";
+                clearBtn.classList.add('hidden');
+            }
+
+            // Buttons State
+            document.getElementById('prevBtn').disabled = currentQuestionIndex === 0;
+
+            const actionBtn = document.getElementById('actionBtn');
+            if (isConfirmed) {
+                actionBtn.disabled = true;
+                actionBtn.className = "px-6 py-2.5 bg-slate-300 text-slate-500 font-semibold rounded-lg text-sm cursor-not-allowed";
+                actionBtn.innerHTML = `<span>Answer Confirmed</span> <i class="fa-solid fa-lock text-xs"></i>`;
+            } else {
+                actionBtn.disabled = !currentAns;
+                actionBtn.className = `px-6 py-2.5 font-semibold rounded-lg text-sm shadow-md transition flex items-center space-x-2 ${
+                    currentAns ? 'bg-indigo-600 hover:bg-indigo-700 text-white cursor-pointer' : 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                }`;
+                actionBtn.innerHTML = `<span>Confirm Answer</span> <i class="fa-solid fa-check"></i>`;
+            }
+
+            // Feedback Display
+            const feedbackBanner = document.getElementById('feedbackBanner');
+            const feedbackTitle = document.getElementById('feedbackTitle');
+            const feedbackExplanation = document.getElementById('feedbackExplanation');
+
+            if (isConfirmed) {
+                feedbackBanner.classList.remove('hidden');
+                const isCorrect = currentAns === q.correctWord;
+                if (isCorrect) {
+                    feedbackBanner.className = "rounded-xl p-4 border bg-emerald-50 border-emerald-200 text-emerald-900";
+                    feedbackTitle.className = "font-bold text-emerald-800 flex items-center space-x-2";
+                    feedbackTitle.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-600 text-lg"></i> <span>Correct Answer!</span>`;
+                } else {
+                    feedbackBanner.className = "rounded-xl p-4 border bg-rose-50 border-rose-200 text-rose-900";
+                    feedbackTitle.className = "font-bold text-rose-800 flex items-center space-x-2";
+                    feedbackTitle.innerHTML = `<i class="fa-solid fa-circle-xmark text-rose-600 text-lg"></i> <span>Incorrect. Correct Word: "<u class="font-black">${q.correctWord}</u>"</span>`;
+                }
+                feedbackExplanation.innerHTML = `<strong>Explanation:</strong> ${q.explanation}`;
+            } else {
+                feedbackBanner.classList.add('hidden');
+            }
+        }
+
+        // 11. CONFIRM ANSWER (INSTANT FEEDBACK & LOCKING)
+        function confirmAnswer() {
+            if (!userAnswers[currentQuestionIndex]) return;
+            confirmedAnswers[currentQuestionIndex] = true;
+            renderWordBank();
+            updateQuestionUI();
+        }
+
+        // 12. NAVIGATION
+        function navigateNext() {
+            if (currentQuestionIndex < questionsData.length - 1) {
+                loadQuestion(currentQuestionIndex + 1);
+            }
+        }
+
+        function navigatePrev() {
+            if (currentQuestionIndex > 0) {
+                loadQuestion(currentQuestionIndex - 1);
+            }
+        }
+
+        function focusWordBank() {
+            document.getElementById('wordBankContainer').scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+
+        // 13. BRITISH FEMALE NARRATOR (Speech Synthesis)
+        function readQuestion() {
+            if (!('speechSynthesis' in window)) {
+                alert("Speech synthesis is not supported in this browser.");
+                return;
+            }
+
+            window.speechSynthesis.cancel(); // Stop ongoing speech
+
+            const q = questionsData[currentQuestionIndex];
+            const textToRead = `${q.sentenceBefore} blank ${q.sentenceAfter}`;
+
+            const utterance = new SpeechSynthesisUtterance(textToRead);
+            utterance.rate = 0.9; // clear pacing
+
+            // Attempt to locate a British female voice
+            const voices = window.speechSynthesis.getVoices();
+            const britishFemaleVoice = voices.find(v => 
+                (v.lang === 'en-GB' || v.lang.includes('GB')) && (v.name.includes('Female') || v.name.includes('Hazel') || v.name.includes('Susan') || v.name.includes('Victoria') || v.name.includes('Google UK English Female'))
+            ) || voices.find(v => v.lang === 'en-GB' || v.lang.includes('GB')) || voices.find(v => v.lang.startsWith('en'));
+
+            if (britishFemaleVoice) {
+                utterance.voice = britishFemaleVoice;
+            }
+
+            window.speechSynthesis.speak(utterance);
+        }
+
+        // Ensure voices load
+        if ('speechSynthesis' in window) {
+            window.speechSynthesis.onvoiceschanged = () => {
+                window.speechSynthesis.getVoices();
+            };
+        }
+
+        // 14. SUBMIT QUIZ & SHOW TEACHER DASHBOARD
+        function submitFinalQuiz() {
+            // Confirm if unconfirmed questions exist
+            const unconfirmedCount = confirmedAnswers.filter(c => !c).length;
+            if (unconfirmedCount > 0) {
+                const proceed = confirm(`You have ${unconfirmedCount} unconfirmed question(s). Submitting now will grade unanswered or unconfirmed items as zero. Do you wish to continue?`);
+                if (!proceed) return;
+            }
+
+            clearInterval(timerInterval);
+
+            // Hide Quiz Screen, Show Results
+            document.getElementById('quizScreen').classList.add('hidden');
+            document.getElementById('resultScreen').classList.remove('hidden');
+
+            // Compute Score
+            let score = 0;
+            questionsData.forEach((q, idx) => {
+                if (userAnswers[idx] === q.correctWord) {
+                    score++;
+                }
+            });
+
+            // Populate Student Details
+            document.getElementById('summaryName').innerText = studentName;
+            document.getElementById('summaryId').innerText = studentId;
+            document.getElementById('summaryScore').innerText = `${score} / ${questionsData.length}`;
+
+            // Populate Review Table
+            const reviewContainer = document.getElementById('reviewContainer');
+            reviewContainer.innerHTML = "";
+
+            questionsData.forEach((q, idx) => {
+                const userChoice = userAnswers[idx] || "No Answer";
+                const isCorrect = userChoice === q.correctWord;
+
+                const card = document.createElement('div');
+                card.className = `p-4 rounded-xl border ${isCorrect ? 'bg-emerald-50/50 border-emerald-200' : 'bg-rose-50/50 border-rose-200'} space-y-1.5`;
+
+                card.innerHTML = `
+                    <div class="flex items-start justify-between">
+                        <span class="text-xs font-bold uppercase ${isCorrect ? 'text-emerald-700' : 'text-rose-700'}">
+                            Question ${idx + 1} - ${isCorrect ? 'CORRECT' : 'INCORRECT'}
+                        </span>
+                        <span class="text-xs font-semibold px-2 py-0.5 rounded ${isCorrect ? 'bg-emerald-200 text-emerald-800' : 'bg-rose-200 text-rose-800'}">
+                            ${isCorrect ? '+1 Pt' : '0 Pts'}
+                        </span>
+                    </div>
+                    <p class="text-sm font-medium text-slate-800">
+                        ${q.sentenceBefore} <strong class="underline">${userChoice}</strong> ${q.sentenceAfter}
+                    </p>
+                    <div class="text-xs text-slate-600">
+                        <strong>Correct Word:</strong> <span class="text-indigo-700 font-bold">${q.correctWord}</span> | 
+                        <strong>Explanation:</strong> ${q.explanation}
+                    </div>
+                `;
+                reviewContainer.appendChild(card);
+            });
+        }
+
+        // 15. EMAIL SCORE TO TEACHER
+        function sendScoreEmail() {
+            let score = 0;
+            questionsData.forEach((q, idx) => {
+                if (userAnswers[idx] === q.correctWord) score++;
+            });
+
+            const recipient = "mesayferedegn2@gmail.com";
+            const subject = encodeURIComponent(`Quiz Submission: ${studentName} (ID: ${studentId})`);
+
+            let bodyText = `TOUR GUIDING & OPERATIONS VOCABULARY ASSESSMENT\n`;
+            bodyText += `--------------------------------------------------\n`;
+            bodyText += `Student Name: ${studentName}\n`;
+            bodyText += `Candidate ID: ${studentId}\n`;
+            bodyText += `Final Score: ${score} / ${questionsData.length}\n`;
+            bodyText += `--------------------------------------------------\n\n`;
+            bodyText += `ITEM BREAKDOWN:\n`;
+
+            questionsData.forEach((q, idx) => {
+                const choice = userAnswers[idx] || "Unanswered";
+                const correct = choice === q.correctWord ? "CORRECT" : `INCORRECT (Expected: ${q.correctWord})`;
+                bodyText += `Q${idx + 1}: ${choice} -> ${correct}\n`;
+            });
+
+            bodyText += `\nSubmitted via Web Interactive Assessment Tool.`;
+
+            const mailtoUrl = `mailto:${recipient}?subject=${subject}&body=${encodeURIComponent(bodyText)}`;
+            window.location.href = mailtoUrl;
+        }
+    </script>
+</body>
+</html>
